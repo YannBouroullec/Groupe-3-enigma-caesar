@@ -60,12 +60,25 @@ def chiffrer(message: str, cle: int) -> str:
 	return "".join(_decaler_lettre(c, cle) for c in message)
 
 
-def dechiffrer(message: str, cle: int):
-	# TODO: retourner la chaîne déchiffrée (type str).
-	# Exigence visible dans tests/test_caesar.py :
-	# - test_cesar_round_trip
-	# Le test vérifie que dechiffrer(chiffrer(msg, 7), 7) == msg.
-	pass
+def dechiffrer(message: str, cle: int) -> str:
+	"""Déchiffre un message chiffré par César.
+
+	Déchiffrer revient à chiffrer avec la clé opposée. On délègue donc
+	à `chiffrer` avec `-cle`, ce qui garantit que
+	`dechiffrer(chiffrer(m, k), k) == m`.
+
+	Paramètres :
+		message (str) : le texte chiffré à déchiffrer.
+		cle (int)     : la clé utilisée lors du chiffrement.
+
+	Retour :
+		str : le message en clair.
+
+	Exemple :
+		>>> dechiffrer("Ludy, lyty, lysy!", 42)
+		'Veni, vidi, vici!'
+	"""
+	return chiffrer(message, -cle)
 
 
 def enigma_chiffrer(message: str, cles):
