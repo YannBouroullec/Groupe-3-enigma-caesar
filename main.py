@@ -34,17 +34,30 @@ def _decaler_lettre(lettre: str, decalage: int) -> str:
     nouvelle_position = (position + decalage) % 26
     return chr(base + nouvelle_position)
 
-def chiffrer(message: str, cle: int):
-	# TODO: retourner la chaîne chiffrée (type str).
-	# Exigences visibles dans tests/test_caesar.py :
-	# - test_cesar_officiel_cle_42
-	# - test_cesar_officiel_cle_neg_42
-	# - test_cesar_cle_zero_identite
-	# Exemples attendus par les tests :
-	# - chiffrer("Veni, vidi, vici!", 42) -> "Ludy, lyty, lysy!"
-	# - chiffrer("Veni, vidi, vici!", -42) -> "Foxs, fsns, fsms!"
-	# - chiffrer("Tout pareil.", 0) -> "Tout pareil."
-	pass
+def chiffrer(message: str, cle: int) -> str:
+	"""Chiffre un message avec le chiffrement de César.
+
+	Chaque lettre de l'alphabet ASCII est décalée de `cle` positions.
+	Les caractères non alphabétiques (espaces, ponctuation, accents)
+	sont laissés inchangés. La casse est préservée.
+
+	Paramètres :
+		message (str) : le texte clair à chiffrer.
+		cle (int)     : entier de décalage (positif ou négatif).
+
+	Retour :
+		str : le message chiffré.
+
+	Exemples :
+		>>> chiffrer("Veni, vidi, vici!", 42)
+		'Ludy, lyty, lysy!'
+		>>> chiffrer("Veni, vidi, vici!", -42)
+		'Foxs, fsns, fsms!'
+		>>> chiffrer("Tout pareil.", 0)
+		'Tout pareil.'
+	"""
+	# On applique _decaler_lettre a chaque caractere et on reassemble.
+	return "".join(_decaler_lettre(c, cle) for c in message)
 
 
 def dechiffrer(message: str, cle: int):
