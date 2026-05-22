@@ -81,13 +81,48 @@ def dechiffrer(message: str, cle: int) -> str:
 	return chiffrer(message, -cle)
 
 
-def enigma_chiffrer(message: str, cles):
-	# TODO: retourner la chaîne chiffrée Enigma César (type str).
-	# Exigence visible dans tests/test_caesar.py :
-	# - test_enigma_officiel_maison
-	# Exemple attendu par le test :
-	# - enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
-	pass
+def enigma_chiffrer(message: str, cles) -> str:
+	"""Chiffre un message avec le chiffrement Enigma César (3 clés rotatives).
+
+	La clé est composée de 3 entiers appliqués tour à tour, lettre par lettre :
+	position 1 -> cles[0], position 2 -> cles[1], position 3 -> cles[2],
+	position 4 -> cles[0], et ainsi de suite. Le compteur de position
+	n'avance QUE sur les lettres : les espaces et la ponctuation ne
+	consomment pas de clé.
+
+	Paramètres :
+		message (str)         : le texte clair à chiffrer.
+		cles (tuple ou list)  : exactement 3 entiers (ex. (7, 16, 9)).
+
+	Retour :
+		str : le message chiffré.
+
+	Lève :
+		ValueError : si `cles` ne contient pas exactement 3 elements.
+
+	Exemple :
+		>>> enigma_chiffrer("MAISON", (7, 16, 9))
+		'TQRZEW'
+	"""
+	# Validation : la cle Enigma doit avoir exactement 3 nombres.
+	if len(cles) != 3:
+		raise ValueError(
+			f"La cle Enigma doit contenir exactement 3 nombres, "
+			f"{len(cles)} fourni(s)."
+		)
+
+	resultat = []
+	compteur_lettres = 0
+	for caractere in message:
+		# Le compteur n'avance que sur les lettres ASCII.
+		if ("a" <= caractere <= "z") or ("A" <= caractere <= "Z"):
+			cle_courante = cles[compteur_lettres % 3]
+			resultat.append(_decaler_lettre(caractere, cle_courante))
+			compteur_lettres += 1
+		else:
+			# Espaces, ponctuation, accents : inchanges, pas de consommation de cle.
+			resultat.append(caractere)
+	return "".join(resultat)
 
 
 def _parse_cle(texte: str):
