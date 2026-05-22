@@ -125,6 +125,29 @@ def enigma_chiffrer(message: str, cles) -> str:
 	return "".join(resultat)
 
 
+def enigma_dechiffrer(message: str, cles) -> str:
+	"""Déchiffre un message chiffré par Enigma César.
+
+	Comme pour César, déchiffrer revient à chiffrer avec les clés opposées.
+	On garantit ainsi que
+	`enigma_dechiffrer(enigma_chiffrer(m, k), k) == m`.
+
+	Paramètres :
+		message (str)        : le texte chiffré à déchiffrer.
+		cles (tuple ou list) : les 3 entiers utilisés lors du chiffrement.
+
+	Retour :
+		str : le message en clair.
+
+	Exemple :
+		>>> enigma_dechiffrer("TQRZEW", (7, 16, 9))
+		'MAISON'
+	"""
+	# Inverser chaque cle revient a dechiffrer.
+	cles_inversees = tuple(-c for c in cles)
+	return enigma_chiffrer(message, cles_inversees)
+
+
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
 
