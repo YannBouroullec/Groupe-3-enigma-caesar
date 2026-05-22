@@ -4,6 +4,35 @@ Squelette de départ pour votre équipe.
 """
 import argparse
 
+def _decaler_lettre(lettre: str, decalage: int) -> str:
+    """Décale une lettre de l'alphabet d'un nombre donné de positions.
+
+    Brique de base utilisée par César et Enigma César. La fonction gère
+    automatiquement les clés négatives et les clés supérieures à 26 grâce
+    à l'opérateur modulo. La casse (majuscule/minuscule) est préservée.
+    Les caractères qui ne sont pas des lettres ASCII (espaces, ponctuation,
+    chiffres, lettres accentuées) sont retournés inchangés.
+
+    Paramètres :
+        lettre (str)   : un seul caractère à décaler.
+        decalage (int) : nombre de positions à décaler (peut être négatif).
+
+    Retour :
+        str : la lettre décalée, ou le caractère original si non alphabétique.
+    """
+    # Determiner la base ASCII selon la casse de la lettre.
+    if "a" <= lettre <= "z":
+        base = ord("a")
+    elif "A" <= lettre <= "Z":
+        base = ord("A")
+    else:
+        # Caractere non alphabetique ASCII : on le laisse inchange.
+        return lettre
+
+    # Position dans l'alphabet (0 a 25), application du decalage modulo 26.
+    position = ord(lettre) - base
+    nouvelle_position = (position + decalage) % 26
+    return chr(base + nouvelle_position)
 
 def chiffrer(message: str, cle: int):
 	# TODO: retourner la chaîne chiffrée (type str).
