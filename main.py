@@ -195,6 +195,75 @@ def ecrire_fichier(chemin: str, contenu: str) -> None:
 		print(f"Erreur : permission refusee pour ecrire dans '{chemin}'.")
 		raise
 
+def mode_interactif() -> None:
+	"""Lance un menu console guidé pour l'utilisateur.
+
+	Activé quand le programme est lancé sans arguments en ligne de commande.
+	L'utilisateur choisit l'opération, saisit son message et sa clé,
+	et le résultat est affiché. Aucune connaissance d'argparse requise.
+	"""
+	print("=" * 50)
+	print("  Mini-Projet A : Chiffrement de Cesar / Enigma")
+	print("=" * 50)
+	print()
+	print("Que souhaitez-vous faire ?")
+	print("  1. Chiffrer un message (Cesar)")
+	print("  2. Dechiffrer un message (Cesar)")
+	print("  3. Chiffrer un message (Enigma Cesar)")
+	print("  4. Dechiffrer un message (Enigma Cesar)")
+	print("  0. Quitter")
+	print()
+
+	choix = input("Votre choix : ").strip()
+	if choix == "0":
+		print("Au revoir.")
+		return
+
+	if choix not in ("1", "2", "3", "4"):
+		print(f"Erreur : choix '{choix}' invalide.")
+		return
+
+	# Saisie du message (au clavier ou depuis un fichier).
+	source = input("Lire le message depuis un fichier ? (o/N) : ").strip().lower()
+	if source == "o":
+		chemin = input("Chemin du fichier : ").strip()
+		try:
+			message = lire_fichier(chemin)
+		except (FileNotFoundError, PermissionError):
+			return
+	else:
+		message = input("Message : ")
+
+	# Saisie de la cle, format different selon Cesar ou Enigma.
+	if choix in ("1", "2"):
+		texte_cle = input("Cle (entier, ex. 42 ou -42) : ").strip()
+	else:
+		texte_cle = input("Cle Enigma (3 entiers separes par '-', ex. 7-16-9) : ").strip()
+
+	try:
+		cle = _parse_cle(texte_cle)
+	except ValueError:
+		print(f"Erreur : cle '{texte_cle}' invalide.")
+		return
+
+	# Execution de l'operation choisie.
+	try:
+		if choix == "1":
+			resultat = chiffrer(message, cle)
+		elif choix == "2":
+			resultat = dechiffrer(message, cle)
+		elif choix == "3":
+			resultat = enigma_chiffrer(message, cle)
+		else:  # choix == "4"
+			resultat = enigma_dechiffrer(message, cle)
+	except ValueError as erreur:
+		print(f"Erreur : {erreur}")
+		return
+
+	print()
+	print("Resultat :")
+	print(resultat)
+
 
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
@@ -343,13 +412,11 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-	# Ce bloc s'exécute SEULEMENT si ce fichier est lancé directement depuis le terminal.
-	# Exemple : python main.py chiffrer "Veni" --cle 42
-	#
-	# Il ne s'exécute PAS si on fait "import main" depuis un autre fichier Python.
-	# Cela permet d'utiliser le code de main.py dans d'autres projets sans lancer main().
-	# 
-	# Pour les tests : pytest importe ce fichier mais ne lance pas main()
-	# (car __name__ ne vaut pas "__main__" lors d'un import).
-	main()
+	# Si aucun argument fourni en ligne de commande, lancer le mode interactif.
+	# sys.argv[0] est toujours le nom du script ; les vrais arguments commencent a sys.argv[1].
+	import sys
+	if len(sys.argv) == 1:
+		mode_interactif()
+	else:
+		main()
 
