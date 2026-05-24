@@ -1,0 +1,11 @@
+# Configuration partagee pour l'equipe MGA802
+# Garantit que tous les editeurs respectent les memes regles d'indentation.
+root = true
+
+[*.py]
+indent_style = tab
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true

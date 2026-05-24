@@ -4,35 +4,148 @@ Squelette de départ pour votre équipe.
 """
 import argparse
 
+def _decaler_lettre(lettre: str, decalage: int) -> str:
+    """Décale une lettre de l'alphabet d'un nombre donné de positions.
 
-def chiffrer(message: str, cle: int):
-	# TODO: retourner la chaîne chiffrée (type str).
-	# Exigences visibles dans tests/test_caesar.py :
-	# - test_cesar_officiel_cle_42
-	# - test_cesar_officiel_cle_neg_42
-	# - test_cesar_cle_zero_identite
-	# Exemples attendus par les tests :
-	# - chiffrer("Veni, vidi, vici!", 42) -> "Ludy, lyty, lysy!"
-	# - chiffrer("Veni, vidi, vici!", -42) -> "Foxs, fsns, fsms!"
-	# - chiffrer("Tout pareil.", 0) -> "Tout pareil."
-	pass
+    Brique de base utilisée par César et Enigma César. La fonction gère
+    automatiquement les clés négatives et les clés supérieures à 26 grâce
+    à l'opérateur modulo. La casse (majuscule/minuscule) est préservée.
+    Les caractères qui ne sont pas des lettres ASCII (espaces, ponctuation,
+    chiffres, lettres accentuées) sont retournés inchangés.
+
+    Paramètres :
+        lettre (str)   : un seul caractère à décaler.
+        decalage (int) : nombre de positions à décaler (peut être négatif).
+
+    Retour :
+        str : la lettre décalée, ou le caractère original si non alphabétique.
+    """
+    # Determiner la base ASCII selon la casse de la lettre.
+    if "a" <= lettre <= "z":
+        base = ord("a")
+    elif "A" <= lettre <= "Z":
+        base = ord("A")
+    else:
+        # Caractere non alphabetique ASCII : on le laisse inchange.
+        return lettre
+
+    # Position dans l'alphabet (0 a 25), application du decalage modulo 26.
+    position = ord(lettre) - base
+    nouvelle_position = (position + decalage) % 26
+    return chr(base + nouvelle_position)
+
+def chiffrer(message: str, cle: int) -> str:
+	"""Chiffre un message avec le chiffrement de César.
+
+	Chaque lettre de l'alphabet ASCII est décalée de `cle` positions.
+	Les caractères non alphabétiques (espaces, ponctuation, accents)
+	sont laissés inchangés. La casse est préservée.
+
+	Paramètres :
+		message (str) : le texte clair à chiffrer.
+		cle (int)     : entier de décalage (positif ou négatif).
+
+	Retour :
+		str : le message chiffré.
+
+	Exemples :
+		>>> chiffrer("Veni, vidi, vici!", 42)
+		'Ludy, lyty, lysy!'
+		>>> chiffrer("Veni, vidi, vici!", -42)
+		'Foxs, fsns, fsms!'
+		>>> chiffrer("Tout pareil.", 0)
+		'Tout pareil.'
+	"""
+	# On applique _decaler_lettre a chaque caractere et on reassemble.
+	return "".join(_decaler_lettre(c, cle) for c in message)
 
 
-def dechiffrer(message: str, cle: int):
-	# TODO: retourner la chaîne déchiffrée (type str).
-	# Exigence visible dans tests/test_caesar.py :
-	# - test_cesar_round_trip
-	# Le test vérifie que dechiffrer(chiffrer(msg, 7), 7) == msg.
-	pass
+def dechiffrer(message: str, cle: int) -> str:
+	"""Déchiffre un message chiffré par César.
+
+	Déchiffrer revient à chiffrer avec la clé opposée. On délègue donc
+	à `chiffrer` avec `-cle`, ce qui garantit que
+	`dechiffrer(chiffrer(m, k), k) == m`.
+
+	Paramètres :
+		message (str) : le texte chiffré à déchiffrer.
+		cle (int)     : la clé utilisée lors du chiffrement.
+
+	Retour :
+		str : le message en clair.
+
+	Exemple :
+		>>> dechiffrer("Ludy, lyty, lysy!", 42)
+		'Veni, vidi, vici!'
+	"""
+	return chiffrer(message, -cle)
 
 
-def enigma_chiffrer(message: str, cles):
-	# TODO: retourner la chaîne chiffrée Enigma César (type str).
-	# Exigence visible dans tests/test_caesar.py :
-	# - test_enigma_officiel_maison
-	# Exemple attendu par le test :
-	# - enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
-	pass
+def enigma_chiffrer(message: str, cles) -> str:
+	"""Chiffre un message avec le chiffrement Enigma César (3 clés rotatives).
+
+	La clé est composée de 3 entiers appliqués tour à tour, lettre par lettre :
+	position 1 -> cles[0], position 2 -> cles[1], position 3 -> cles[2],
+	position 4 -> cles[0], et ainsi de suite. Le compteur de position
+	n'avance QUE sur les lettres : les espaces et la ponctuation ne
+	consomment pas de clé.
+
+	Paramètres :
+		message (str)         : le texte clair à chiffrer.
+		cles (tuple ou list)  : exactement 3 entiers (ex. (7, 16, 9)).
+
+	Retour :
+		str : le message chiffré.
+
+	Lève :
+		ValueError : si `cles` ne contient pas exactement 3 elements.
+
+	Exemple :
+		>>> enigma_chiffrer("MAISON", (7, 16, 9))
+		'TQRZEW'
+	"""
+	# Validation : la cle Enigma doit avoir exactement 3 nombres.
+	if len(cles) != 3:
+		raise ValueError(
+			f"La cle Enigma doit contenir exactement 3 nombres, "
+			f"{len(cles)} fourni(s)."
+		)
+
+	resultat = []
+	compteur_lettres = 0
+	for caractere in message:
+		# Le compteur n'avance que sur les lettres ASCII.
+		if ("a" <= caractere <= "z") or ("A" <= caractere <= "Z"):
+			cle_courante = cles[compteur_lettres % 3]
+			resultat.append(_decaler_lettre(caractere, cle_courante))
+			compteur_lettres += 1
+		else:
+			# Espaces, ponctuation, accents : inchanges, pas de consommation de cle.
+			resultat.append(caractere)
+	return "".join(resultat)
+
+
+def enigma_dechiffrer(message: str, cles) -> str:
+	"""Déchiffre un message chiffré par Enigma César.
+
+	Comme pour César, déchiffrer revient à chiffrer avec les clés opposées.
+	On garantit ainsi que
+	`enigma_dechiffrer(enigma_chiffrer(m, k), k) == m`.
+
+	Paramètres :
+		message (str)        : le texte chiffré à déchiffrer.
+		cles (tuple ou list) : les 3 entiers utilisés lors du chiffrement.
+
+	Retour :
+		str : le message en clair.
+
+	Exemple :
+		>>> enigma_dechiffrer("TQRZEW", (7, 16, 9))
+		'MAISON'
+	"""
+	# Inverser chaque cle revient a dechiffrer.
+	cles_inversees = tuple(-c for c in cles)
+	return enigma_chiffrer(message, cles_inversees)
 
 
 def _parse_cle(texte: str):
