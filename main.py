@@ -148,6 +148,56 @@ def enigma_dechiffrer(message: str, cles) -> str:
 	return enigma_chiffrer(message, cles_inversees)
 
 
+# Liste des mots français les plus fréquents.
+# Utilisée par score_francais pour évaluer la "francité" d'un texte.
+# Source : mots les plus fréquents de la langue française (articles, prépositions, auxiliaires).
+_MOTS_FRANCAIS_COURANTS = (
+	"le", "la", "les", "un", "une", "des",
+	"de", "du", "et", "ou", "a", "au", "aux",
+	"est", "sont", "etait", "ete",
+	"que", "qui", "quoi", "dont",
+	"je", "tu", "il", "elle", "nous", "vous", "ils", "elles",
+	"ce", "cet", "cette", "ces",
+	"mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses",
+	"pas", "ne", "plus", "tres", "bien",
+	"dans", "sur", "pour", "par", "avec", "sans",
+	"mais", "donc", "car",
+)
+
+
+def score_francais(texte: str) -> int:
+	"""Évalue à quel point un texte ressemble à du français.
+
+	On découpe le texte en mots (en minuscules) et on compte combien
+	d'entre eux figurent dans une liste de mots français très fréquents.
+	Plus le score est élevé, plus le texte est probablement du français.
+
+	Cette fonction est volontairement simple : pas de regex, pas de NLP,
+	juste du comptage. Elle est utilisée pour classer les candidats
+	produits par le brute-force.
+
+	Paramètre :
+		texte (str) : le texte à évaluer.
+
+	Retour :
+		int : nombre de mots courants trouvés (>= 0).
+
+	Exemple :
+		>>> score_francais("le chat est sur la table")
+		4  # "le", "est", "sur", "la"
+	"""
+	# On passe en minuscules et on remplace la ponctuation par des espaces
+	# pour que "Bonjour," et "Bonjour" soient traites pareil.
+	texte_propre = texte.lower()
+	for ponctuation in ".,;:!?\"'()[]{}":
+		texte_propre = texte_propre.replace(ponctuation, " ")
+
+	# Comptage : on parcourt chaque mot et on regarde s'il est dans la liste.
+	mots_du_texte = texte_propre.split()
+	score = sum(1 for mot in mots_du_texte if mot in _MOTS_FRANCAIS_COURANTS)
+	return score
+
+
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
 
