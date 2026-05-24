@@ -147,6 +147,54 @@ def enigma_dechiffrer(message: str, cles) -> str:
 	cles_inversees = tuple(-c for c in cles)
 	return enigma_chiffrer(message, cles_inversees)
 
+def lire_fichier(chemin: str) -> str:
+	"""Lit le contenu d'un fichier texte (encodage UTF-8).
+
+	Affiche un message d'erreur clair si le fichier est introuvable
+	ou illisible, et relance l'exception pour que l'appelant puisse
+	décider quoi faire (sortir du programme, demander un autre nom...).
+
+	Paramètre :
+		chemin (str) : chemin vers le fichier à lire (relatif ou absolu).
+
+	Retour :
+		str : contenu intégral du fichier.
+
+	Lève :
+		FileNotFoundError : si le fichier n'existe pas.
+		PermissionError   : si le fichier n'est pas lisible.
+	"""
+	try:
+		with open(chemin, "r", encoding="utf-8") as f:
+			return f.read()
+	except FileNotFoundError:
+		print(f"Erreur : le fichier '{chemin}' est introuvable.")
+		raise
+	except PermissionError:
+		print(f"Erreur : permission refusee pour lire '{chemin}'.")
+		raise
+
+
+def ecrire_fichier(chemin: str, contenu: str) -> None:
+	"""Écrit du texte dans un fichier (encodage UTF-8).
+
+	Crée le fichier s'il n'existe pas, écrase son contenu s'il existe déjà.
+	Affiche un message d'erreur clair en cas de problème d'écriture.
+
+	Paramètres :
+		chemin (str)  : chemin du fichier à écrire.
+		contenu (str) : texte à écrire.
+
+	Lève :
+		PermissionError : si le fichier ne peut pas être écrit.
+	"""
+	try:
+		with open(chemin, "w", encoding="utf-8") as f:
+			f.write(contenu)
+	except PermissionError:
+		print(f"Erreur : permission refusee pour ecrire dans '{chemin}'.")
+		raise
+
 
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
