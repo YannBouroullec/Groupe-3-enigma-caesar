@@ -258,6 +258,18 @@ def main(argv=None):
 		"action",
 		choices=["chiffrer", "dechiffrer", "enigma"],
 		help="Opération à effectuer (chiffrer, dechiffrer ou enigma).")
+	
+	# Argument optionnel "--fichier" (abreviation "-f") : lit le message depuis un fichier.
+	# Si fourni, le contenu du fichier remplace l'argument "message".
+	parser.add_argument(
+		"-f", "--fichier",
+		help="Chemin d'un fichier texte a chiffrer/dechiffrer (UTF-8).")
+
+	# Argument optionnel "--sortie" (abreviation "-o") : ecrit le resultat dans un fichier.
+	# Si non fourni, le resultat est affiche dans la console (comportement par defaut).
+	parser.add_argument(
+		"-o", "--sortie",
+		help="Chemin du fichier de sortie (sinon affichage console).")
 
 	# Argument positionnel "message" : le texte à traiter.
 	# - Obligatoire
@@ -288,6 +300,15 @@ def main(argv=None):
 	# _parse_cle() transforme la clé en int (César) ou tuple (Enigma).
 	cle = _parse_cle(args.cle)
 
+	# Si --fichier est fourni, on lit le message depuis le fichier
+	# au lieu d'utiliser l'argument "message" de la ligne de commande.
+	if args.fichier:
+		try:
+			args.message = lire_fichier(args.fichier)
+		except (FileNotFoundError, PermissionError):
+			# lire_fichier a deja affiche un message d'erreur clair.
+			return  # On sort proprement, sans pile d'erreur visible a l'utilisateur.
+
 	# === ÉTAPE 5 : Choisir et exécuter l'opération ===
 	# Selon l'action, on appelle la fonction appropriée.
 	# (Une fois que chiffrer / dechiffrer / enigma_chiffrer seront implémentées,
@@ -305,7 +326,15 @@ def main(argv=None):
 
 	# === ÉTAPE 6 : Afficher le résultat ===
 	# print() affiche le résultat à l'écran pour que l'utilisateur le voie.
-	print(resultat)
+	# Si --sortie est fourni, on ecrit dans le fichier ; sinon on affiche.
+	if args.sortie:
+		try:
+			ecrire_fichier(args.sortie, resultat)
+			print(f"Resultat ecrit dans '{args.sortie}'.")
+		except PermissionError:
+			return
+	else:
+		print(resultat)
 	
 	# TODO : Une fois les fonctions de base implémentées, vous pourrez :
 	# - Ajouter des options pour lire/écrire depuis des fichiers
