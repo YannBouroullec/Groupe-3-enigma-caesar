@@ -198,6 +198,43 @@ def score_francais(texte: str) -> int:
 	return score
 
 
+def brute_force_cesar(message_chiffre: str, top_n: int = 3):
+	"""Tente de déchiffrer un message César en testant toutes les clés.
+
+	Le chiffrement de César n'a que 26 clés possibles (0 à 25). On les
+	teste toutes, on évalue chaque résultat avec score_francais, et on
+	retourne les `top_n` meilleurs candidats triés par score décroissant.
+
+	Le premier élément de la liste retournée est la meilleure proposition
+	automatique. Les suivants permettent à l'utilisateur de choisir si
+	l'automatique se trompe (rare avec un texte français de taille raisonnable).
+
+	Paramètres :
+		message_chiffre (str) : le texte chiffré à casser.
+		top_n (int)           : nombre de candidats à retourner (3 par défaut).
+
+	Retour :
+		list de tuples (score, cle, message_dechiffre), trié du meilleur au pire.
+
+	Exemple :
+		>>> resultats = brute_force_cesar("Ludy, lyty, lysy!")
+		>>> resultats[0][1]  # la clé trouvée
+		42
+	"""
+	candidats = []
+	# 26 cles possibles : 0, 1, 2, ..., 25.
+	# Une cle de 42 est equivalente a une cle de 42 % 26 = 16, donc
+	# tester 0 a 25 couvre toutes les possibilites.
+	for cle in range(26):
+		essai = dechiffrer(message_chiffre, cle)
+		score = score_francais(essai)
+		candidats.append((score, cle, essai))
+
+	# Tri par score decroissant : le meilleur candidat en premier.
+	candidats.sort(key=lambda c: c[0], reverse=True)
+	return candidats[:top_n]
+
+
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
 
