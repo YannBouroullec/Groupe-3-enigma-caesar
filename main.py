@@ -503,6 +503,12 @@ def main(argv=None):
 	parser.add_argument(
 		"-o", "--sortie",
 		help="Chemin du fichier de sortie (sinon affichage console).")
+	
+	# Argument optionnel "--brute-force" (abreviation "-b") : tente de casser le chiffrement.
+	# Quand active, la cle n'est pas necessaire (on la cherche).
+	parser.add_argument(
+		"-b", "--brute-force", action="store_true",
+		help="Mode brute-force : retrouve la cle automatiquement (top 3 candidats).")
 
 	# Argument positionnel "message" : le texte à traiter.
 	# - Obligatoire
@@ -515,7 +521,7 @@ def main(argv=None):
 	# - Obligatoire via required=True
 	# - Peut être un entier (César) ou trois entiers séparés par des tirets (Enigma César)
 	parser.add_argument(
-		"-c", "--cle", required=True,
+		"-c", "--cle", required=False,
 		help="Clé : un entier (ex. '42') ou 'a-b-c' (ex. '7-16-9') pour Enigma.")
 
 	# === ÉTAPE 3 : Analyser les arguments ===
@@ -531,7 +537,13 @@ def main(argv=None):
 
 	# === ÉTAPE 4 : Convertir la clé (texte) en type approprié ===
 	# _parse_cle() transforme la clé en int (César) ou tuple (Enigma).
-	cle = _parse_cle(args.cle)
+	# Si on est en mode brute-force, on n'a pas besoin de cle ; sinon elle est obligatoire.
+	if args.brute_force:
+		cle = None
+	else:
+		if args.cle is None:
+			parser.error("l'argument --cle est obligatoire (sauf en mode --brute-force).")
+		cle = _parse_cle(args.cle)
 
 	# Si --fichier est fourni, on lit le message depuis le fichier
 	# au lieu d'utiliser l'argument "message" de la ligne de commande.
@@ -547,14 +559,27 @@ def main(argv=None):
 	# (Une fois que chiffrer / dechiffrer / enigma_chiffrer seront implémentées,
 	#  ces appels retourneront le résultat du chiffrement/déchiffrement.)
 
-	if args.action == "chiffrer":
-		# L'utilisateur veut chiffrer : on appelle chiffrer()
+	# Branchement vers la bonne fonction selon l'action et le mode.
+	if args.brute_force:
+		# Mode brute-force : on cherche la cle au lieu d'en utiliser une.
+		if args.action == "enigma":
+			candidats = brute_force_enigma_optimise(args.message)
+		else:
+			# Pour "chiffrer" et "dechiffrer", on utilise brute_force_cesar.
+			candidats = brute_force_cesar(args.message)
+
+		# Affichage du top 3 : score, cle, debut du message.
+		print("Top 3 des candidats (score, cle, debut du texte) :")
+		for score, cle_trouvee, texte in candidats:
+			extrait = texte[:60].replace("\n", " ")
+			print(f"  score={score:3d}  cle={cle_trouvee}  texte='{extrait}...'")
+		# Le premier candidat est la meilleure proposition.
+		resultat = candidats[0][2]
+	elif args.action == "chiffrer":
 		resultat = chiffrer(args.message, cle)
 	elif args.action == "dechiffrer":
-		# L'utilisateur veut déchiffrer : on appelle dechiffrer()
 		resultat = dechiffrer(args.message, cle)
 	else:  # args.action == "enigma"
-		# L'utilisateur veut utiliser Enigma César : on appelle enigma_chiffrer()
 		resultat = enigma_chiffrer(args.message, cle)
 
 	# === ÉTAPE 6 : Afficher le résultat ===
