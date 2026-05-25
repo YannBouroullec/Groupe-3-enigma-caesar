@@ -265,6 +265,170 @@ def mode_interactif() -> None:
 	print(resultat)
 
 
+# Liste des mots français les plus fréquents.
+# Utilisée par score_francais pour évaluer la "francité" d'un texte.
+# Source : mots les plus fréquents de la langue française (articles, prépositions, auxiliaires).
+_MOTS_FRANCAIS_COURANTS = (
+	"le", "la", "les", "un", "une", "des",
+	"de", "du", "et", "ou", "a", "au", "aux",
+	"est", "sont", "etait", "ete",
+	"que", "qui", "quoi", "dont",
+	"je", "tu", "il", "elle", "nous", "vous", "ils", "elles",
+	"ce", "cet", "cette", "ces",
+	"mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses",
+	"pas", "ne", "plus", "tres", "bien",
+	"dans", "sur", "pour", "par", "avec", "sans",
+	"mais", "donc", "car",
+)
+
+
+def score_francais(texte: str) -> int:
+	"""Évalue à quel point un texte ressemble à du français.
+
+	On découpe le texte en mots (en minuscules) et on compte combien
+	d'entre eux figurent dans une liste de mots français très fréquents.
+	Plus le score est élevé, plus le texte est probablement du français.
+
+	Cette fonction est volontairement simple : pas de regex, pas de NLP,
+	juste du comptage. Elle est utilisée pour classer les candidats
+	produits par le brute-force.
+
+	Paramètre :
+		texte (str) : le texte à évaluer.
+
+	Retour :
+		int : nombre de mots courants trouvés (>= 0).
+
+	Exemple :
+		>>> score_francais("le chat est sur la table")
+		4  # "le", "est", "sur", "la"
+	"""
+	# On passe en minuscules et on remplace la ponctuation par des espaces
+	# pour que "Bonjour," et "Bonjour" soient traites pareil.
+	texte_propre = texte.lower()
+	for ponctuation in ".,;:!?\"'()[]{}":
+		texte_propre = texte_propre.replace(ponctuation, " ")
+
+	# Comptage : on parcourt chaque mot et on regarde s'il est dans la liste.
+	mots_du_texte = texte_propre.split()
+	score = sum(1 for mot in mots_du_texte if mot in _MOTS_FRANCAIS_COURANTS)
+	return score
+
+
+def brute_force_cesar(message_chiffre: str, top_n: int = 3):
+	"""Tente de déchiffrer un message César en testant toutes les clés.
+
+	Le chiffrement de César n'a que 26 clés possibles (0 à 25). On les
+	teste toutes, on évalue chaque résultat avec score_francais, et on
+	retourne les `top_n` meilleurs candidats triés par score décroissant.
+
+	Le premier élément de la liste retournée est la meilleure proposition
+	automatique. Les suivants permettent à l'utilisateur de choisir si
+	l'automatique se trompe (rare avec un texte français de taille raisonnable).
+
+	Paramètres :
+		message_chiffre (str) : le texte chiffré à casser.
+		top_n (int)           : nombre de candidats à retourner (3 par défaut).
+
+	Retour :
+		list de tuples (score, cle, message_dechiffre), trié du meilleur au pire.
+
+	Exemple :
+		>>> resultats = brute_force_cesar("Ludy, lyty, lysy!")
+		>>> resultats[0][1]  # la clé trouvée
+		42
+	"""
+	candidats = []
+	# 26 cles possibles : 0, 1, 2, ..., 25.
+	# Une cle de 42 est equivalente a une cle de 42 % 26 = 16, donc
+	# tester 0 a 25 couvre toutes les possibilites.
+	for cle in range(26):
+		essai = dechiffrer(message_chiffre, cle)
+		score = score_francais(essai)
+		candidats.append((score, cle, essai))
+
+	# Tri par score decroissant : le meilleur candidat en premier.
+	candidats.sort(key=lambda c: c[0], reverse=True)
+	return candidats[:top_n]
+
+
+def brute_force_enigma(message_chiffre: str, top_n: int = 3):
+	"""Tente de déchiffrer un message Enigma César en testant toutes les clés.
+
+	Enigma César a 26³ = 17 576 combinaisons de clés possibles. On les
+	teste toutes (version naïve), on évalue chaque résultat avec
+	score_francais, et on retourne les `top_n` meilleurs candidats.
+
+	Cette version est volontairement simple pour servir de référence
+	dans le rapport de performance. Voir brute_force_enigma_optimise
+	pour une version plus rapide.
+
+	Paramètres :
+		message_chiffre (str) : le texte chiffré à casser.
+		top_n (int)           : nombre de candidats à retourner.
+
+	Retour :
+		list de tuples (score, cles, message_dechiffre), trié du meilleur au pire.
+		`cles` est un tuple (a, b, c).
+	"""
+	candidats = []
+	# Trois boucles imbriquees : 26 * 26 * 26 = 17 576 essais.
+	for a in range(26):
+		for b in range(26):
+			for c in range(26):
+				cles = (a, b, c)
+				essai = enigma_dechiffrer(message_chiffre, cles)
+				score = score_francais(essai)
+				candidats.append((score, cles, essai))
+
+	# Tri par score decroissant.
+	candidats.sort(key=lambda candidat: candidat[0], reverse=True)
+	return candidats[:top_n]
+
+
+def brute_force_enigma_optimise(message_chiffre: str, top_n: int = 3, taille_echantillon: int = 100):
+	"""Version optimisée du brute-force Enigma : ne score que le début du texte.
+
+	L'idée : pour un texte de plusieurs centaines de caractères, scorer
+	intégralement chacun des 17 576 candidats est coûteux. En pratique,
+	les ~100 premiers caractères suffisent à départager les bonnes clés
+	des mauvaises (un vrai texte français y aura plusieurs mots courants ;
+	un texte aléatoire n'en aura aucun).
+
+	On déchiffre quand même le message complet une fois la meilleure clé
+	identifiée, pour que l'utilisateur reçoive le texte intégral.
+
+	Paramètres :
+		message_chiffre (str)     : le texte chiffré à casser.
+		top_n (int)               : nombre de candidats à retourner.
+		taille_echantillon (int)  : nombre de caractères évalués par essai.
+
+	Retour :
+		list de tuples (score, cles, message_dechiffre_complet).
+	"""
+	# Echantillon = les N premiers caracteres du message chiffre.
+	echantillon = message_chiffre[:taille_echantillon]
+
+	candidats = []
+	for a in range(26):
+		for b in range(26):
+			for c in range(26):
+				cles = (a, b, c)
+				# On dechiffre uniquement l'echantillon pour gagner du temps.
+				essai_court = enigma_dechiffrer(echantillon, cles)
+				score = score_francais(essai_court)
+				candidats.append((score, cles))
+
+	candidats.sort(key=lambda candidat: candidat[0], reverse=True)
+
+	# Pour les top_n meilleurs, on dechiffre le message complet.
+	resultats = []
+	for score, cles in candidats[:top_n]:
+		message_complet = enigma_dechiffrer(message_chiffre, cles)
+		resultats.append((score, cles, message_complet))
+	return resultats
+
+
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
 
