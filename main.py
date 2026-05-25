@@ -269,6 +269,49 @@ def brute_force_enigma(message_chiffre: str, top_n: int = 3):
 	return candidats[:top_n]
 
 
+def brute_force_enigma_optimise(message_chiffre: str, top_n: int = 3, taille_echantillon: int = 100):
+	"""Version optimisée du brute-force Enigma : ne score que le début du texte.
+
+	L'idée : pour un texte de plusieurs centaines de caractères, scorer
+	intégralement chacun des 17 576 candidats est coûteux. En pratique,
+	les ~100 premiers caractères suffisent à départager les bonnes clés
+	des mauvaises (un vrai texte français y aura plusieurs mots courants ;
+	un texte aléatoire n'en aura aucun).
+
+	On déchiffre quand même le message complet une fois la meilleure clé
+	identifiée, pour que l'utilisateur reçoive le texte intégral.
+
+	Paramètres :
+		message_chiffre (str)     : le texte chiffré à casser.
+		top_n (int)               : nombre de candidats à retourner.
+		taille_echantillon (int)  : nombre de caractères évalués par essai.
+
+	Retour :
+		list de tuples (score, cles, message_dechiffre_complet).
+	"""
+	# Echantillon = les N premiers caracteres du message chiffre.
+	echantillon = message_chiffre[:taille_echantillon]
+
+	candidats = []
+	for a in range(26):
+		for b in range(26):
+			for c in range(26):
+				cles = (a, b, c)
+				# On dechiffre uniquement l'echantillon pour gagner du temps.
+				essai_court = enigma_dechiffrer(echantillon, cles)
+				score = score_francais(essai_court)
+				candidats.append((score, cles))
+
+	candidats.sort(key=lambda candidat: candidat[0], reverse=True)
+
+	# Pour les top_n meilleurs, on dechiffre le message complet.
+	resultats = []
+	for score, cles in candidats[:top_n]:
+		message_complet = enigma_dechiffrer(message_chiffre, cles)
+		resultats.append((score, cles, message_complet))
+	return resultats
+
+
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
 
