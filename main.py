@@ -441,22 +441,38 @@ def _parse_cle(texte: str):
 		texte (str) : la chaîne saisie par l'utilisateur après --cle.
 
 	Retour :
-		int : une clé entière pour César
-		tuple : un tuple de 3 entiers pour Enigma César
+		int   : une clé entière pour César.
+		tuple : un tuple de 3 entiers pour Enigma César.
+
+	Lève :
+		ValueError : si la chaine n'est ni un entier valide,
+		             ni un triplet valide d'entiers separes par "-".
 
 	Exemple :
 		_parse_cle("42") → 42 (int)
 		_parse_cle("7-16-9") → (7, 16, 9) (tuple)
 	"""
-	# Vérifier s'il y a un tiret dans la clé (sauf si c'est juste un signe négatif).
-	# lstrip("-") enlève tous les tirets au début, pour distinguer :
-	#   "-42" (entier négatif, pas de tiret après le signe)
-	#   "7-16-9" (trois nombres séparés par des tirets)
+	# Verifier s'il y a un tiret dans la cle (sauf si c'est juste un signe negatif).
+	# lstrip("-") enleve tous les tirets au debut, pour distinguer :
+	#   "-42" (entier negatif, pas de tiret apres le signe)
+	#   "7-16-9" (trois nombres separes par des tirets)
 	if "-" in texte.lstrip("-"):
-		# Si oui, c'est une clé Enigma César : on coupe au niveau du "-" et on convertit en entiers.
-		return tuple(int(x) for x in texte.split("-"))
-	# Sinon, c'est une clé César simple : on convertit en entier.
-	return int(texte)
+		# Cle Enigma : on coupe au "-" et on convertit en entiers.
+		morceaux = texte.split("-")
+		if len(morceaux) != 3:
+			raise ValueError(
+				f"La cle Enigma doit contenir exactement 3 nombres separes par '-', "
+				f"{len(morceaux)} fourni(s) dans '{texte}'."
+			)
+		try:
+			return tuple(int(x) for x in morceaux)
+		except ValueError:
+			raise ValueError(f"La cle Enigma '{texte}' contient un element non entier.")
+	# Cle Cesar simple : on convertit en entier.
+	try:
+		return int(texte)
+	except ValueError:
+		raise ValueError(f"La cle '{texte}' n'est pas un entier valide.")
 
 def main(argv=None):
 	"""Point d'entrée principal du programme en ligne de commande.
