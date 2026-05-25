@@ -235,6 +235,40 @@ def brute_force_cesar(message_chiffre: str, top_n: int = 3):
 	return candidats[:top_n]
 
 
+def brute_force_enigma(message_chiffre: str, top_n: int = 3):
+	"""Tente de déchiffrer un message Enigma César en testant toutes les clés.
+
+	Enigma César a 26³ = 17 576 combinaisons de clés possibles. On les
+	teste toutes (version naïve), on évalue chaque résultat avec
+	score_francais, et on retourne les `top_n` meilleurs candidats.
+
+	Cette version est volontairement simple pour servir de référence
+	dans le rapport de performance. Voir brute_force_enigma_optimise
+	pour une version plus rapide.
+
+	Paramètres :
+		message_chiffre (str) : le texte chiffré à casser.
+		top_n (int)           : nombre de candidats à retourner.
+
+	Retour :
+		list de tuples (score, cles, message_dechiffre), trié du meilleur au pire.
+		`cles` est un tuple (a, b, c).
+	"""
+	candidats = []
+	# Trois boucles imbriquees : 26 * 26 * 26 = 17 576 essais.
+	for a in range(26):
+		for b in range(26):
+			for c in range(26):
+				cles = (a, b, c)
+				essai = enigma_dechiffrer(message_chiffre, cles)
+				score = score_francais(essai)
+				candidats.append((score, cles, essai))
+
+	# Tri par score decroissant.
+	candidats.sort(key=lambda candidat: candidat[0], reverse=True)
+	return candidats[:top_n]
+
+
 def _parse_cle(texte: str):
 	"""Convertit l'argument --cle en clé utilisable.
 
