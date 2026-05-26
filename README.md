@@ -1,156 +1,132 @@
-# MGA802 — Mini-Projet A : Chiffrement de César
+# Mini-Projet A — Chiffrement de César & Enigma César
 
-Dépôt-modèle (template) pour le Mini-Projet A du cours **MGA802 — Introduction à
-la programmation avec Python** à l'ÉTS.
+Mini-projet du cours MGA802 (ÉTS, été 2026). Un programme Python qui chiffre et déchiffre des messages selon deux algorithmes — le chiffrement de César et une version simplifiée d'Enigma à trois clés rotatives — avec un mode brute-force pour casser un chiffré dont on ignore la clé.
 
-> **Étudiants :** cliquez sur **« Use this template »** (en haut à droite) pour
-> créer le dépôt de votre équipe. **Ne forkez pas** ce dépôt directement.
+## Équipe
 
----
+- Yann Bouroullec — interface, fichiers, CLI, mode interactif
+- Théo Malavieille — fonctions de chiffrement César et Enigma
+- Pierre-Jean Tulasne — brute-force et mesures de performance
 
-## À faire
+## Ce que le programme fait
 
-Implémenter un programme Python qui chiffre et déchiffre du texte selon
-**deux modes** :
+Deux chiffrements :
 
-1. Le **chiffrement de César** classique (clé = un seul entier)
-2. Le **chiffrement Enigma César** (clé = trois entiers rotatifs)
+- **César** décale chaque lettre du message d'un nombre constant de positions. La clé est un entier (positif, négatif, peu importe, on s'en sort avec un modulo).
+- **Enigma César** utilise trois clés `(a, b, c)` appliquées tour à tour, lettre par lettre. Plus dur à casser que César parce qu'il faut deviner les trois nombres au lieu d'un seul.
 
-### Fonctionnalités attendues
+Deux façons de l'utiliser :
 
-Pour **chacun des deux modes** :
+- Une **ligne de commande** avec argparse (options `--fichier`, `--sortie`, `--brute-force`).
+- Un **menu interactif** qui se lance quand on exécute `main.py` sans aucun argument.
 
-1. Chiffrement / déchiffrement d'un message saisi dans la **console**
-2. Chiffrement / déchiffrement d'un **fichier texte** (chemin fourni par
-   l'utilisateur)
-3. Acceptation de **n'importe quelle clé entière** (positive ou négative).
-   Pour Enigma César : clé de **exactement 3 nombres** (ex : `42-21-7`).
-4. Mode **brute-force** : retrouver la clé d'un message chiffré par chiffrement de César ou chiffrement Enigma César
-5. **Messages clairs** à l'utilisateur (introduction, requêtes, info, erreurs)
+## Installation
 
-> Le brute-force d'Enigma César balaie **26³ = 17 576 combinaisons**,
-> soyez efficaces pour votre stratégie et mesurez le temps que cela prend (sur la même machine) pour différentes solutions dans votre rapport.
+Python 3.14 et `pytest` pour les tests. C'est tout.
 
-### Caractères utilisés pour tester
+```bash
+git clone <url-du-depot>
+cd <nom-du-projet>
+pip install -r requirements.txt
+```
 
-**César :**
+## Utilisation
 
-| Clé | Entrée                  | Sortie attendue        |
-|----:|-------------------------|------------------------|
-| 42  | `Veni, vidi, vici!`     | `Ludy, lyty, lysy!`    |
-| -42 | `Veni, vidi, vici!`     | `Foxs, fsns, fsms!`    |
+### Mode interactif
 
-**Enigma César :**
+Le plus simple. Tu lances :
 
-| Clé        | Entrée     | Sortie attendue |
-|------------|------------|-----------------|
-| `(7,16,9)` | `MAISON`   | `TQRZEW`        |
+```bash
+python main.py
+```
 
----
+Et tu suis le menu (chiffrer ou déchiffrer, César ou Enigma, message au clavier ou depuis un fichier).
 
-## Comment commencer
+### Ligne de commande
 
-1. Cliquez **« Use this template »** (boutton vert en haut à droite de la fenêtre Github) → choisissez un nom pour le dépôt de
-   votre équipe (par ex. `equipe-N-caesar-20262`)
-2. **Ajoutez vos coéquipiers** comme collaborateurs (Settings → Collaborators). N'oubliez pas que vos collègues peuvent aussi forker le dépôt et proposer des mises à jour par PR.
-3. Clonez le dépôt localement : `git clone <url>`
-4. Discutez ensemble :
-   - Comment découper le code en **fonctions et modules** ?
-   - Qui fait quoi ?
-   - Quelle stratégie pour le brute-force ?
-5. Travaillez toujours avec des **branches** (`git checkout -b ma-fonctionnalite`) et faites
-   des **pull requests** pour réviser le code de vos coéquipiers.
-
----
-
-## Utilisation en ligne de commande
-
-En plus du mode console interactif, le programme s'utilise directement depuis le
-terminal grâce au module standard [`argparse`](https://docs.python.org/3/library/argparse.html).
-Le point d'entrée (`main()` + `if __name__ == "__main__":`) est déjà fourni
-dans `main.py` ; il appelle vos fonctions une fois implémentées.
+**Chiffrer et déchiffrer en César :**
 
 ```bash
 python main.py chiffrer   "Veni, vidi, vici!" --cle 42
 python main.py dechiffrer "Ludy, lyty, lysy!" --cle 42
-python main.py enigma     "MAISON"            --cle 7-16-9
 ```
 
-- `action` : `chiffrer`, `dechiffrer` ou `enigma`
-- `message` : le texte à traiter (entre guillemets)
-- `-c` / `--cle` : un entier pour César (ex. `42`, `-42`), ou trois entiers
-  séparés par des tirets pour Enigma César (ex. `7-16-9`)
-
-Affichez l'aide générée automatiquement avec :
+**Enigma César** (trois entiers séparés par des tirets) :
 
 ```bash
-python main.py -h
+python main.py enigma "MAISON" --cle 7-16-9
 ```
 
-> Libre à vous d'ajouter d'autres arguments (ex. `--fichier`, `--brute-force`).
+**Lire un fichier au lieu de saisir le message** :
 
-### Mesurer le temps d'exécution (brute-force)
-
-Pour le rapport, mesurez le temps de votre brute-force avec la bibliothèque
-standard :
-
-```python
-from time import perf_counter
-tic = perf_counter()
-# ... votre brute-force ...
-print(f"Temps d'execution: {perf_counter() - tic} [s]")
+```bash
+python main.py chiffrer --cle 42 --fichier message.txt
 ```
 
-ou, pour une mesure répétée plus fiable, avec
-[`timeit`](https://docs.python.org/3/library/timeit.html) :
+**Écrire le résultat dans un fichier** :
 
-```python
-from timeit import timeit
-timeit('brute_force_cesar(message_chiffre)', globals=globals(), number=100)
+```bash
+python main.py chiffrer "Veni, vidi, vici!" --cle 42 --sortie chiffre.txt
 ```
 
-> Indiquez la machine utilisée dans le rapport (les temps ne sont comparables
-> que sur la même machine).
+**Retrouver la clé toute seule** (brute-force) :
 
----
+```bash
+python main.py chiffrer "Ivuqvby sl tvukl, jljp lza bu tlzzhnl..." --brute-force
+python main.py enigma   "QXJUNHA WO QYFCXV PMRTW..."                --brute-force
+```
 
-## Livrables (rappel)
+Le programme affiche le top 3 des candidats classés par ressemblance au français, puis imprime le meilleur.
 
-- Le code source (Python)
-- Ce `README.md` mis à jour avec :
-  - Description du programme
-  - Instructions d'installation et d'exécution
-  - Auteurs (membres de l'équipe)
-  - Choix de conception (par ex. comment vous gérez les majuscules / accents)
-- Un dossier `tests/` avec quelques tests unitaires
-- Un **rapport écrit de 3 pages max** (PDF, commité au dépôt, pas de page de garde, pas de conclusion, pas d'introduction) couvrant :
-  structure, algorithmes, évaluation de performance, distribution des tâches
+Pour voir toutes les options : `python main.py -h`.
 
-> Voir `Mini_Projet_A_Specs.md` (Moodle) pour le détail complet.
+## Choix de conception
 
----
+Quelques décisions à connaître :
 
-## Critères d'évaluation (résumé)
+- Les fichiers sont lus et écrits en **UTF-8**.
+- Les **lettres accentuées** (é, à, ç, ñ...) ne sont pas décalées, elles restent telles quelles dans le message chiffré. On ne décale que `a-z` et `A-Z`. La casse est préservée.
+- Dans Enigma, le **compteur de position n'avance que sur les lettres**. Un espace ou une virgule ne consomme pas de clé. Donc `chiffrer("MA SON", (7,16,9))` applique les clés `7, 16, 9, 7, 16` aux 5 lettres `M, A, S, O, N`, comme si l'espace n'existait pas.
+- Le **modulo 26** sur les clés gère tout : `42` est équivalent à `16`, `-42` à `10`, et `1000` à `12`. Pas besoin de borner l'entrée utilisateur.
+- Le **brute-force évalue la "francité"** d'un candidat en comptant les mots français courants (`le`, `la`, `et`, `de`, `est`...). C'est rudimentaire mais ça suffit pour des textes français de taille normale. Ça ne marche pas sur du latin (Veni, vidi, vici), du texte très court, ou autre chose que du français — limite assumée et discutée dans le rapport.
 
-| Catégorie           | Points |
-|---------------------|-------:|
-| Code fonctionnel    |   3/10 |
-| Tâche accomplie     |   2/10 |
-| Commentaires        |   1/10 |
-| Noms de variables   |   2/10 |
-| Style               |   2/10 |
+## Tests
 
-Voir `Mini_Projet_A_Grading_Rubric.md` (Moodle) pour les critères détaillés.
+11 tests unitaires dans `tests/test_caesar.py`. Pour les lancer :
 
----
+```bash
+pytest -v
+```
 
-## Conseils
+Ils couvrent : chiffrement César avec clés positives, négatives, nulles et géantes, chiffrement Enigma, round-trip (chiffrer puis déchiffrer doit redonner le message d'origine), conservation des accents et de la casse, rejet d'une clé Enigma qui n'a pas exactement 3 nombres, et validation du brute-force sur César et Enigma.
 
-- Lisez la documentation Python sur le module
-  [`string`](https://docs.python.org/3/library/string.html)
-- Consultez le guide d'utilisation des tests : [`TESTS_GUIDE.md`](TESTS_GUIDE.md)
-- Pour la lecture / écriture de fichiers texte, utilisez `with open(..., encoding="utf-8") as f:`
-- **Testez votre code avant chaque commit**
-- **Messages de commit clairs** (`feat: ...`, `fix: ...`, `docs: ...`)
+Pour les mesures de performance, le script `benchmark.py` chronomètre le brute-force César, le brute-force Enigma naïf et la version Enigma optimisée :
 
-Bonne programmation !
+```bash
+python benchmark.py
+```
+
+## Structure
+
+```
+.
+├── main.py            # toutes les fonctions, l'interface CLI, le mode interactif
+├── benchmark.py       # mesures de performance
+├── tests/
+│   └── test_caesar.py # 11 tests unitaires
+├── message.txt        # fichier d'exemple pour tester --fichier
+├── requirements.txt
+├── README.md
+└── .editorconfig
+```
+
+Dans `main.py` les fonctions sont groupées en quatre sections :
+
+1. Brique de base : `_decaler_lettre`.
+2. Chiffrements : `chiffrer`, `dechiffrer`, `enigma_chiffrer`, `enigma_dechiffrer`.
+3. Fichiers et interface : `lire_fichier`, `ecrire_fichier`, `mode_interactif`.
+4. Brute-force : `score_francais`, `brute_force_cesar`, `brute_force_enigma`, `brute_force_enigma_optimise`.
+
+## Méthode de travail
+
+On a suivi le workflow Git du cours : une branche par fonctionnalité (`feat/chiffrement`, `feat/brute-force`, `feat/interface`), une Pull Request pour chaque, et merge dans `main` seulement après revue par un autre coéquipier. On a aussi fait tourner les rôles pour que personne ne teste son propre code.
